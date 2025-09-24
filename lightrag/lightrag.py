@@ -278,15 +278,17 @@ class LightRAG:
     embedding_batch_num: int = field(default=int(os.getenv("EMBEDDING_BATCH_NUM", 10)))
     """Batch size for embedding computations."""
 
+    # 并发调用 embedding_func 的最大数量。
     embedding_func_max_async: int = field(
         default=int(os.getenv("EMBEDDING_FUNC_MAX_ASYNC", 8))
     )
     """Maximum number of concurrent embedding function calls."""
 
+    #  embedding缓存配置
     embedding_cache_config: dict[str, Any] = field(
         default_factory=lambda: {
             "enabled": False,
-            "similarity_threshold": 0.95,
+            "similarity_threshold ": 0.95,
             "use_llm_check": False,
         }
     )
@@ -302,23 +304,28 @@ class LightRAG:
 
     # LLM Configuration
     # ---
+    # 大语言模型相关配置
 
+    # 与大语言模型交互的函数
     llm_model_func: Callable[..., object] | None = field(default=None)
     """Function for interacting with the large language model (LLM). Must be set before use."""
 
     llm_model_name: str = field(default="gpt-4o-mini")
     """Name of the LLM model used for generating responses."""
 
+    # 并发调用 llm_model_func 的最大数量。
     summary_max_tokens: int = field(
         default=int(os.getenv("SUMMARY_MAX_TOKENS", DEFAULT_SUMMARY_MAX_TOKENS))
     )
     """Maximum tokens allowed for entity/relation description."""
-
+    
+    # 每次调用 LLM 时允许的最大上下文长度（包括系统提示、实体、关系和 chunk）。
     summary_context_size: int = field(
         default=int(os.getenv("SUMMARY_CONTEXT_SIZE", DEFAULT_SUMMARY_CONTEXT_SIZE))
     )
     """Maximum number of tokens allowed per LLM response."""
 
+    # 在合并实体和关系时，强制调用 LLM 生成描述的最少 chunk 数量。
     summary_length_recommended: int = field(
         default=int(
             os.getenv("SUMMARY_LENGTH_RECOMMENDED", DEFAULT_SUMMARY_LENGTH_RECOMMENDED)
@@ -326,24 +333,30 @@ class LightRAG:
     )
     """Recommended length of LLM summary output."""
 
+    # 并发调用 llm_model_func 的最大数量。
     llm_model_max_async: int = field(
         default=int(os.getenv("MAX_ASYNC", DEFAULT_MAX_ASYNC))
     )
     """Maximum number of concurrent LLM calls."""
 
+    # llm_model_func 的额外参数
     llm_model_kwargs: dict[str, Any] = field(default_factory=dict)
     """Additional keyword arguments passed to the LLM model function."""
 
+    # llm_model_func 的默认超时时间（秒）
     default_llm_timeout: int = field(
         default=int(os.getenv("LLM_TIMEOUT", DEFAULT_LLM_TIMEOUT))
     )
 
     # Rerank Configuration
     # ---
+    # 重新排序检索结果
 
+    # 重新排序检索结果的函数
     rerank_model_func: Callable[..., object] | None = field(default=None)
     """Function for reranking retrieved documents. All rerank configurations (model name, API keys, top_k, etc.) should be included in this function. Optional."""
 
+    # 重新排序时返回的最大结果数量
     min_rerank_score: float = field(
         default=get_env_value("MIN_RERANK_SCORE", DEFAULT_MIN_RERANK_SCORE, float)
     )
@@ -351,7 +364,9 @@ class LightRAG:
 
     # Storage
     # ---
+    # 各种存储的类
 
+    # 向量数据库存储的额外参数
     vector_db_storage_cls_kwargs: dict[str, Any] = field(default_factory=dict)
     """Additional parameters for vector database storage."""
 
@@ -364,16 +379,19 @@ class LightRAG:
     # Extensions
     # ---
 
+    # 最大并行插入操作数量
     max_parallel_insert: int = field(
         default=int(os.getenv("MAX_PARALLEL_INSERT", DEFAULT_MAX_PARALLEL_INSERT))
     )
     """Maximum number of parallel insert operations."""
 
+    # 知识图谱查询时返回的最大节点数量
     max_graph_nodes: int = field(
         default=get_env_value("MAX_GRAPH_NODES", DEFAULT_MAX_GRAPH_NODES, int)
     )
     """Maximum number of graph nodes to return in knowledge graph queries."""
 
+    # 附加参数
     addon_params: dict[str, Any] = field(
         default_factory=lambda: {
             "language": get_env_value(
@@ -389,16 +407,19 @@ class LightRAG:
     # TODO: Deprecated (LightRAG will never initialize storage automatically on creation，and finalize should be call before destroying)
     auto_manage_storages_states: bool = field(default=False)
     """If True, lightrag will automatically calls initialize_storages and finalize_storages at the appropriate times."""
-
+    
+    # cosine 相似度阈值，用于向量数据库的存储类初始化
     cosine_better_than_threshold: float = field(
         default=float(os.getenv("COSINE_THRESHOLD", 0.2))
     )
 
+    
     ollama_server_infos: Optional[OllamaServerInfos] = field(default=None)
     """Configuration for Ollama server information."""
 
     _storages_status: StoragesStatus = field(default=StoragesStatus.NOT_CREATED)
 
+  
     def __post_init__(self):
         from lightrag.kg.shared_storage import (
             initialize_share_data,
