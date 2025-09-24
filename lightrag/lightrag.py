@@ -122,16 +122,16 @@ class LightRAG:
 
     # Storage
     # ---
-
+    # kv数据库
     kv_storage: str = field(default="JsonKVStorage")
     """Storage backend for key-value data."""
-
+    # 向量数据库
     vector_storage: str = field(default="NanoVectorDBStorage")
     """Storage backend for vector embeddings."""
-
+    # graph库
     graph_storage: str = field(default="NetworkXStorage")
     """Storage backend for knowledge graphs."""
-
+    # 文档状态存储库
     doc_status_storage: str = field(default="JsonDocStatusStorage")
     """Storage type for tracking document processing statuses."""
 
@@ -149,52 +149,61 @@ class LightRAG:
     # Query parameters
     # ---
 
+    # 每次查询时检索的实体/关系数量上限。
+    # Number of entities/relations to retrieve for each query.
     top_k: int = field(default=get_env_value("TOP_K", DEFAULT_TOP_K, int))
-    """Number of entities/relations to retrieve for each query."""
 
+    # 每次查询时能放入上下文的文本 chunk 最大数量。
+    # Maximum number of chunks in context.
     chunk_top_k: int = field(
         default=get_env_value("CHUNK_TOP_K", DEFAULT_CHUNK_TOP_K, int)
     )
-    """Maximum number of chunks in context."""
 
+    # 上下文中单个实体允许的最大 token 数。
+    # Maximum number of tokens for entity in context.
     max_entity_tokens: int = field(
         default=get_env_value("MAX_ENTITY_TOKENS", DEFAULT_MAX_ENTITY_TOKENS, int)
     )
-    """Maximum number of tokens for entity in context."""
 
+    # 上下文中单个关系允许的最大 token 数。
+    # Maximum number of tokens for relation in context.
     max_relation_tokens: int = field(
         default=get_env_value("MAX_RELATION_TOKENS", DEFAULT_MAX_RELATION_TOKENS, int)
     )
-    """Maximum number of tokens for relation in context."""
 
+    # 上下文总 token 数上限（包括系统提示、实体、关系和 chunk）。
+    # Maximum total tokens in context (including system prompt, entities, relations and chunks).
     max_total_tokens: int = field(
         default=get_env_value("MAX_TOTAL_TOKENS", DEFAULT_MAX_TOTAL_TOKENS, int)
     )
-    """Maximum total tokens in context (including system prompt, entities, relations and chunks)."""
 
+    # 向量数据库检索时的余弦相似度阈值，过滤低相关结果。
+    # Cosine threshold of vector DB retrieval for entities, relations and chunks.
     cosine_threshold: int = field(
         default=get_env_value("COSINE_THRESHOLD", DEFAULT_COSINE_THRESHOLD, int)
     )
-    """Cosine threshold of vector DB retrieval for entities, relations and chunks."""
 
+    # 每个实体或关系最多关联的 chunk 数量。
+    # Number of related chunks to grab from single entity or relation.
     related_chunk_number: int = field(
         default=get_env_value("RELATED_CHUNK_NUMBER", DEFAULT_RELATED_CHUNK_NUMBER, int)
     )
-    """Number of related chunks to grab from single entity or relation."""
 
+    # 知识图谱 chunk 选择方式，'WEIGHT' 表示按权重，'VECTOR' 表示按向量相似度。
+    # Method for selecting text chunks: 'WEIGHT' for weight-based selection, 'VECTOR' for embedding similarity-based selection.
     kg_chunk_pick_method: str = field(
         default=get_env_value("KG_CHUNK_PICK_METHOD", DEFAULT_KG_CHUNK_PICK_METHOD, str)
     )
-    """Method for selecting text chunks: 'WEIGHT' for weight-based selection, 'VECTOR' for embedding similarity-based selection."""
 
     # Entity extraction
     # ---
-
+    # 实体是信息抽取的结果，和 chunk、token 不是同一层级的概念。实体通常来源于 chunk 的内容，但本身不是 chunk 或 token
+    # 从文本中提取实体和关系时的最大尝试次数，防止内容歧义时多次调用 LLM。
     entity_extract_max_gleaning: int = field(
         default=get_env_value("MAX_GLEANING", DEFAULT_MAX_GLEANING, int)
     )
     """Maximum number of entity extraction attempts for ambiguous content."""
-
+    # 合并实体和关系时，至少需要多少个 chunk 的内容才能生成描述，防止描述过于简短。
     force_llm_summary_on_merge: int = field(
         default=get_env_value(
             "FORCE_LLM_SUMMARY_ON_MERGE", DEFAULT_FORCE_LLM_SUMMARY_ON_MERGE, int
@@ -202,16 +211,21 @@ class LightRAG:
     )
 
     # Text chunking
-    # ---
+    # ---  
+    # 分词器（tokenizer）会将字符串内容转为 token 序列，并统计 token 数量。
+    # chunking_func 会根据 token 数量（如 chunk_token_size、chunk_overlap_token_size）把文本切成多个 chunk。
+    # 这样能保证每个 chunk 的 token 数量不会超过大模型的输入限制，且分块粒度与大模型计费、推理完全一致。
 
+    # 拆分文档时每个chunk的最大token数。
     chunk_token_size: int = field(default=int(os.getenv("CHUNK_SIZE", 1200)))
     """Maximum number of tokens per text chunk when splitting documents."""
 
+    # 拆分文档时相邻chunk之间的重叠token数。
     chunk_overlap_token_size: int = field(
         default=int(os.getenv("CHUNK_OVERLAP_SIZE", 100))
     )
     """Number of overlapping tokens between consecutive text chunks to preserve context."""
-
+    # 声明分词器
     tokenizer: Optional[Tokenizer] = field(default=None)
     """
     A function that returns a Tokenizer instance.
@@ -221,7 +235,7 @@ class LightRAG:
 
     tiktoken_model_name: str = field(default="gpt-4o-mini")
     """Model name used for tokenization when chunking text with tiktoken. Defaults to `gpt-4o-mini`."""
-
+    # 将文本分成多个chunk的函数
     chunking_func: Callable[
         [
             Tokenizer,
@@ -254,10 +268,13 @@ class LightRAG:
 
     # Embedding
     # ---
+    # 文本向量化
 
+    # 文本转成向量的函数
     embedding_func: EmbeddingFunc | None = field(default=None)
     """Function for computing text embeddings. Must be set before use."""
 
+    # 批量处理文本进行向量化时的批次大小。
     embedding_batch_num: int = field(default=int(os.getenv("EMBEDDING_BATCH_NUM", 10)))
     """Batch size for embedding computations."""
 
