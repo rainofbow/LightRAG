@@ -445,7 +445,8 @@ class LightRAG:
         if hasattr(self, "log_file_path"):
             delattr(self, "log_file_path")
 
-        initialize_share_data()
+        # 用于初始化和管理 LightRAG 运行时所需的全局共享数据或资源。
+        initialize_share_data()         # lightrag.kg.shared_storage
 
         if not os.path.exists(self.working_dir):
             logger.info(f"Creating working directory {self.working_dir}")
