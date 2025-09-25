@@ -133,6 +133,7 @@ async def initialize_rag():
 
 
 async def main():
+    rag = None
     try:
         # Clear old data files
         files_to_delete = [
@@ -144,7 +145,6 @@ async def main():
             "vdb_entities.json",
             "vdb_relationships.json",
         ]
-
         for file in files_to_delete:
             file_path = os.path.join(WORKING_DIR, file)
             if os.path.exists(file_path):
@@ -167,59 +167,35 @@ async def main():
         with open("./book.txt", "r", encoding="utf-8") as f:
             await rag.ainsert(f.read())
 
-        # # Perform naive search
-        # print("\n=====================")
-        # print("Query mode: naive")
-        # print("=====================")
-        # resp = await rag.aquery(
-        #     "What are the top themes in this story?",
-        #     param=QueryParam(mode="naive", stream=True),
-        # )
-        # if inspect.isasyncgen(resp):
-        #     await print_stream(resp)
-        # else:
-        #     print(resp)
-
-        # # Perform local search
-        # print("\n=====================")
-        # print("Query mode: local")
-        # print("=====================")
-        # resp = await rag.aquery(
-        #     # "What are the top themes in this story?",
-        #     "总结故事的主要内容。",
-        #     param=QueryParam(mode="local", stream=True),
-        # )
-        # if inspect.isasyncgen(resp):
-        #     await print_stream(resp)
-        # else:
-        #     print(resp)
-
-        # # Perform global search
-        # print("\n=====================")
-        # print("Query mode: global")
-        # print("=====================")
-        # resp = await rag.aquery(
-        #     "总结故事的主要内容。",
-        #     param=QueryParam(mode="global", stream=True),
-        # )
-        # if inspect.isasyncgen(resp):
-        #     await print_stream(resp)
-        # else:
-        #     print(resp)
-
-        # # Perform hybrid search
-        # print("\n=====================")
-        # print("Query mode: hybrid")
-        # print("=====================")
-        # resp = await rag.aquery(
-        #     "总结故事的主要内容。",
-        #     param=QueryParam(mode="hybrid", stream=True),
-        # )
-        # if inspect.isasyncgen(resp):
-        #     await print_stream(resp)
-        # else:
-        #     print(resp)
-
+        print("\n=====================")
+        print("进入循环提问模式，直接输入问题，回车发送，输入为空退出。\n")
+        print("可选模式: naive, local, global, hybrid。默认naive。输入格式: [模式:]你的问题\n例如: local:请总结故事内容\n")
+        while True:
+            user_input = input("请输入你的问题（或回车退出）：").strip()
+            if not user_input:
+                print("退出循环。"); break
+            # 支持模式选择
+            if ":" in user_input:
+                mode, query = user_input.split(":", 1)
+                mode = mode.strip().lower()
+                query = query.strip()
+                if mode not in ["naive", "local", "global", "hybrid"]:
+                    print("无效模式，使用默认naive。")
+                    mode = "naive"
+            else:
+                mode = "naive"
+                query = user_input
+            print(f"\nQuery mode: {mode}")
+            print(f"Question: {query}")
+            try:
+                resp = await rag.aquery(query, param=QueryParam(mode=mode, stream=True))
+                if inspect.isasyncgen(resp):
+                    await print_stream(resp)
+                else:
+                    print(resp)
+                print("\n----------------------\n")
+            except Exception as e:
+                print(f"查询出错: {e}")
     except Exception as e:
         print(f"An error occurred: {e}")
     finally:
@@ -232,3 +208,4 @@ if __name__ == "__main__":
     configure_logging()
     asyncio.run(main())
     print("\nDone!")
+
