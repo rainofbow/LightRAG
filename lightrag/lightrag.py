@@ -1898,6 +1898,7 @@ class LightRAG:
                 pipeline_status["latest_message"] = log_message
                 pipeline_status["history_messages"].append(log_message)
 
+    # 插入自定义知识图谱
     def insert_custom_kg(
         self, custom_kg: dict[str, Any], full_doc_id: str = None
     ) -> None:
@@ -2079,6 +2080,7 @@ class LightRAG:
             if update_storage:
                 await self._insert_done()
 
+    # 同步查询接口
     def query(
         self,
         query: str,
