@@ -1846,6 +1846,7 @@ class LightRAG:
                 pipeline_status["latest_message"] = log_message
                 pipeline_status["history_messages"].append(log_message)
 
+    # 处理单个chunk以提取实体和关系
     async def _process_extract_entities(
         self, chunk: dict[str, Any], pipeline_status=None, pipeline_status_lock=None
     ) -> list:
@@ -1867,6 +1868,7 @@ class LightRAG:
                 pipeline_status["history_messages"].append(error_msg)
             raise e
 
+    # 将所有存储持久化到磁盘
     async def _insert_done(
         self, pipeline_status=None, pipeline_status_lock=None
     ) -> None:
