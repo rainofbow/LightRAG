@@ -616,6 +616,7 @@ class LightRAG:
 
         self._storages_status = StoragesStatus.CREATED
 
+    # 初始化所有存储 one by one
     async def initialize_storages(self):
         """Storage initialization must be called one by one to prevent deadlock"""
         if self._storages_status == StoragesStatus.CREATED:
@@ -638,6 +639,7 @@ class LightRAG:
             self._storages_status = StoragesStatus.INITIALIZED
             logger.debug("All storage types initialized")
 
+    # 异步关闭所有存储
     async def finalize_storages(self):
         """Asynchronously finalize the storages with improved error handling"""
         if self._storages_status == StoragesStatus.INITIALIZED:
@@ -844,10 +846,12 @@ class LightRAG:
             f"Data migration completed: migrated {migration_count} documents with entities/relations"
         )
 
+    # 获取图谱中所有实体标签
     async def get_graph_labels(self):
         text = await self.chunk_entity_relation_graph.get_all_labels()
         return text
 
+    # 获取指定标签的知识子图谱
     async def get_knowledge_graph(
         self,
         node_label: str,
@@ -875,6 +879,7 @@ class LightRAG:
             node_label, max_depth, max_nodes
         )
 
+    # 根据存储名称获取存储类
     def _get_storage_class(self, storage_name: str) -> Callable[..., Any]:
         # Direct imports for default storage implementations
         if storage_name == "JsonKVStorage":
@@ -908,20 +913,18 @@ class LightRAG:
         file_paths: str | list[str] | None = None,
         track_id: str | None = None,
     ) -> str:
-        """Sync Insert documents with checkpoint support
+        """同步插入文档，支持检查点机制
 
-        Args:
-            input: Single document string or list of document strings
-            split_by_character: if split_by_character is not None, split the string by character, if chunk longer than
-            chunk_token_size, it will be split again by token size.
-            split_by_character_only: if split_by_character_only is True, split the string by character only, when
-            split_by_character is None, this parameter is ignored.
-            ids: single string of the document ID or list of unique document IDs, if not provided, MD5 hash IDs will be generated
-            file_paths: single string of the file path or list of file paths, used for citation
-            track_id: tracking ID for monitoring processing status, if not provided, will be generated
+        参数说明：
+            input: 单个文档字符串或文档字符串列表
+            split_by_character: 如果不为 None，则按指定字符分割字符串；若分割后 chunk 仍超过 chunk_token_size，则会再次按 token 数分割。
+            split_by_character_only: 若为 True，则仅按字符分割（当 split_by_character 为 None 时该参数无效）。
+            ids: 单个文档 ID 字符串或唯一文档 ID 列表，若未提供则自动生成 MD5 哈希 ID。
+            file_paths: 单个文件路径字符串或文件路径列表，用于引用。
+            track_id: 跟踪处理状态的 ID，若未提供则自动生成。
 
-        Returns:
-            str: tracking ID for monitoring processing status
+        返回：
+            str: 跟踪处理状态的 ID
         """
         loop = always_get_an_event_loop()
         return loop.run_until_complete(
@@ -1042,6 +1045,7 @@ class LightRAG:
             if update_storage:
                 await self._insert_done()
 
+    # 文档处理流水线第一步：入队列文档
     async def apipeline_enqueue_documents(
         self,
         input: str | list[str],
@@ -1189,6 +1193,7 @@ class LightRAG:
 
         return track_id
 
+    # 文档处理流水线第二步：入队列处理失败的文档
     async def apipeline_enqueue_error_documents(
         self,
         error_files: list[dict[str, Any]],
@@ -1387,6 +1392,7 @@ class LightRAG:
 
         return to_process_docs
 
+    # 文档处理流水线第三步：处理入队列的文档
     async def apipeline_process_enqueue_documents(
         self,
         split_by_character: str | None = None,
